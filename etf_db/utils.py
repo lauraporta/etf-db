@@ -64,6 +64,7 @@ def download_clean_public_data():
 
     return clean_dataframe(retreive_raw_data())
 
+
 def __set_payload(tab, per_page, only):
 
     return {'per_page': per_page, 'only': only, 'tab': tab }
