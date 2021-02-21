@@ -1,6 +1,13 @@
 import requests
 import json
 import pandas as pd 
+import numpy as np
+import logging
+import datetime
+
+logging.basicConfig(filename='app.log', filemode='a', format='%(name)s - %(levelname)s - %(message)s')
+logging.info(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+
 
 def retreive_raw_data(per_page = 2235,
                       only = 'data',
@@ -22,17 +29,16 @@ def retreive_raw_data(per_page = 2235,
     """
 
     data = pd.DataFrame()
+    
+    print('Download ', end =" ")
 
-    try:
-        for tab in tabs:
-            payload = __set_payload(per_page = per_page, only = only, tab = tab)
-            json = __get_json(payload)
-            json = __clean_json(json)
-            data = __build_dataframe(json, data) 
+    for tab in tabs:
+        print('.', end =" ")
 
-
-    except ValueError as e:
-        print(e.message)
+        payload = __set_payload(per_page = per_page, only = only, tab = tab)
+        json = __get_json(payload)
+        json = __clean_json(json)
+        data = __build_dataframe(json, data)
     
     return data
 
@@ -43,9 +49,13 @@ def clean_dataframe(data):
     Columns with no useful information are dropped.
     When possible values are converted to datetime and float.
 
+    Args:
+        data (pandas dataframe): raw dataframe containing public information on ETFs, to be cleaned
+
     Returns:
         data (pandas dataframe): cleaned dataframe containing public information on ETFs
     """
+    print('\nStarting cleaning process')
 
     data = __extract_from_dict(data)
     data = __drop_columns(data)
@@ -57,12 +67,22 @@ def clean_dataframe(data):
 def download_clean_public_data():
     """
     Downloads a cleaned dataframe with all public information of ETFdb screener.
+    It might take a long time to run, depending on server response. 
+    You might then want to store locally the data.
 
     Returns:
         data (pandas dataframe): cleaned dataframe containing public information on ETFs
     """
+    data = pd.DataFrame()
 
-    return clean_dataframe(retreive_raw_data())
+    try:
+        data = clean_dataframe(retreive_raw_data())
+        print('Success')
+    except Exception as e:
+        logging.error(e)
+        print('Wops! A bug. Please consider reporting logging information.')
+
+    return data
 
 
 def __set_payload(tab, per_page, only):
@@ -78,12 +98,14 @@ def __get_json(payload):
     while(status != 200):
         try:
             r = requests.post(url, data=json.dumps(payload), json=True)
-            if r.status_code == 200:
-                print(str(payload['tab']) + ' downloaded successfully.')
-        except:
-            print('Connection error for ' + str(payload['tab']) + '. Trying again...')
+            status = r.status_code
 
-        status = r.status_code
+            if status == 200:
+                logging.info(str(payload['tab']) + ' downloaded successfully.')
+            else:
+                logging.warning('Connection error for ' + str(payload['tab']) + '. Trying again...')
+        except Exception as e:
+            logging.error(e)
 
     return r.json()
 
@@ -127,7 +149,7 @@ def __extract_from_dict(data):
     for col in data.columns:
         if 'text' in data[col][0]:
             data[col] = clean(col, data, 'text')
-        elif 'type' in data[col][0]:
+        elif 'type ' in data[col][0]:
             data[col] = clean(col, data, 'type')
 
     return data
@@ -163,7 +185,8 @@ def __convert2float(data):
                     data[col] = data[col].str.replace(sy, '') 
 
         data[col] = data[col].str.replace(',', '')
-        try : 
+
+        try: 
             data[col] = data[col].astype('float')
         except:
             continue
