@@ -3,8 +3,11 @@ import json
 import pandas as pd 
 import numpy as np
 import logging
+import datetime
 
-logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='app.log', filemode='a', format='%(name)s - %(levelname)s - %(message)s')
+logging.info(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+
 
 def retreive_raw_data(per_page = 2235,
                       only = 'data',
@@ -74,8 +77,9 @@ def download_clean_public_data():
 
     try:
         data = clean_dataframe(retreive_raw_data())
+        print('Success')
     except Exception as e:
-        logging.error('Exception: ' + e)
+        logging.error(e)
         print('Wops! A bug. Please consider reporting logging information.')
 
     return data
@@ -101,7 +105,7 @@ def __get_json(payload):
             else:
                 logging.warning('Connection error for ' + str(payload['tab']) + '. Trying again...')
         except Exception as e:
-            logging.error('Exception: ' + e)
+            logging.error(e)
 
     return r.json()
 
