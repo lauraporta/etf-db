@@ -6,4 +6,4 @@ setup(name = 'etf_db',
       author = 'Laura Porta',
       author_email = 'porta.laura.2@gmail.com',
       packages = ['etf_db'],
-      install_requires = ('requests', 'pandas', 'json', 'numpy', 'logging', 'datetime')
+      install_requires = ('requests', 'pandas', 'numpy')

@@ -3,7 +3,7 @@ import json
 import pandas as pd 
 import numpy as np
 import logging
-import datetime
+from datetime import datetime
 
 logging.basicConfig(filename='app.log', filemode='a', format='%(name)s - %(levelname)s - %(message)s')
 logging.info(datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
